@@ -1,0 +1,10 @@
+[Unit]
+Description=Check GitHub for updates every 5 minutes
+
+[Timer]
+# :02, :07, :12 ... so it never overlaps the bot's own runs at :00, :05 ...
+OnCalendar=*:2/5
+Persistent=true
+
+[Install]
+WantedBy=timers.target

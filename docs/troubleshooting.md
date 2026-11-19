@@ -78,6 +78,16 @@ Harmless. The bot moved the old file aside and
 started fresh. You may miss posts from the last
 few minutes, nothing more.
 
+## Auto-update
+
+`New commit …, waiting for GitHub tests`
+Normal for a few minutes after a push. If it never
+ends, check the Actions tab on GitHub.
+
+Pushed but nothing changed on the server? See
+`journalctl -u telegram-tweet-notification-update -n 30`
+and [auto-update.md](auto-update.md).
+
 ## Start over from scratch
 
 Forget all "last seen" posts (next run starts

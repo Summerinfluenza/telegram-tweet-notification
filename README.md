@@ -10,7 +10,8 @@ accounts post. Each alert has:
 - 🔗 a link to the original post
 
 Runs on your own Linux server (e.g. Hetzner),
-checking every 5 minutes.
+checking every 5 minutes. Push to GitHub and the
+server updates itself.
 
 ## Example alert
 
@@ -57,6 +58,7 @@ Detailed guides:
 - [Telegram setup](docs/setup-telegram.md)
 - [AI provider setup](docs/setup-ai.md)
 - [IBKR setup](docs/setup-ibkr.md)
+- [Auto-update from GitHub](docs/auto-update.md)
 - [Troubleshooting](docs/troubleshooting.md)
 
 ---
@@ -97,8 +99,9 @@ sudo ./deploy/install.sh
 ```
 
 This creates a locked-down `tweetbot` user, a
-Python environment, the settings file and the
-timer. Safe to run again.
+Python environment, the settings file, the bot's
+timer and the auto-update timer. Safe to run
+again.
 
 **3. Fill in your settings**
 
@@ -168,19 +171,16 @@ Change settings (accounts, AI provider, …):
 edit the settings file. Changes apply on the next
 run; no restart needed. Then run `check.sh` again.
 
-Update to the latest code:
-
-```bash
-cd /opt/telegram-tweet-notification
-sudo git pull
-sudo ./deploy/install.sh
-```
+Change the code: push to `main` on GitHub. The
+server picks it up within ~5 minutes, once
+GitHub's tests pass, and tells you in Telegram.
+Broken code is rolled back automatically. Details:
+[docs/auto-update.md](docs/auto-update.md).
 
 Check every minute instead of every 5: in
 `deploy/telegram-tweet-notification.timer` change
-`OnCalendar=*:0/5` to `OnCalendar=minutely`, then
-run `install.sh` again. Costs stay the same (see
-below).
+`OnCalendar=*:0/5` to `OnCalendar=minutely` and
+push. Costs stay the same (see below).
 
 Remove everything:
 
@@ -255,8 +255,9 @@ notifier/
   state.py        last seen post per account
   http_retry.py   shared retry logic
 deploy/
-  install.sh      install / update
+  install.sh      install / reinstall
   check.sh        test all connections
+  auto-update.sh  pull new commits from GitHub
   uninstall.sh    remove
   *.service       what systemd runs
   *.timer         how often
@@ -279,7 +280,8 @@ pytest
 
 Tests use fakes for every outside service and
 never touch the network. GitHub runs them on every
-push (Python 3.10–3.13).
+push (Python 3.10–3.13), and the server only
+deploys commits that pass.
 
 To change the AI's instructions, edit
 `SYSTEM_PROMPT` in `notifier/analysis.py`. To

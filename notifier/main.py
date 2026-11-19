@@ -2,6 +2,7 @@
 
     python -m notifier.main           check all accounts once (what the timer runs)
     python -m notifier.main --check   test every connection and send a sample message
+    python -m notifier.main --notify TEXT   send TEXT to Telegram (used by auto-update)
 
 One run:
   1. Ask X for posts newer than the last one seen, per account.
@@ -17,6 +18,7 @@ lost if Telegram is down - it's sent on the next run instead.
 from __future__ import annotations
 
 import argparse
+import html
 import logging
 import sys
 from dataclasses import dataclass
@@ -160,6 +162,7 @@ def run(config: Config, services: Services) -> bool:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Send new X posts with AI trading analysis to Telegram.")
     parser.add_argument("--check", action="store_true", help="test all connections and send a sample message")
+    parser.add_argument("--notify", metavar="TEXT", help="just send TEXT to Telegram (used by auto-update)")
     args = parser.parse_args(argv)
 
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
@@ -172,6 +175,9 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     services = build_services(config)
+    if args.notify:
+        services.telegram.send(html.escape(args.notify, quote=False))
+        return 0
     if args.check:
         from notifier.check import run_checks
 

@@ -8,11 +8,13 @@ APP_NAME="telegram-tweet-notification"
 
 [[ $EUID -eq 0 ]] || { echo "Run as root: sudo $0" >&2; exit 1; }
 
-systemctl disable --now "${APP_NAME}.timer" 2>/dev/null || true
-rm -f "/etc/systemd/system/${APP_NAME}.service" "/etc/systemd/system/${APP_NAME}.timer"
+systemctl disable --now "${APP_NAME}.timer" "${APP_NAME}-update.timer" 2>/dev/null || true
+rm -f "/etc/systemd/system/${APP_NAME}.service" "/etc/systemd/system/${APP_NAME}.timer" \
+      "/etc/systemd/system/${APP_NAME}-update.service" "/etc/systemd/system/${APP_NAME}-update.timer" \
+      "/usr/local/sbin/${APP_NAME}-update"
 systemctl daemon-reload
 rm -rf "/var/lib/${APP_NAME}"
-echo "Timer removed and state deleted."
+echo "Timers removed and state deleted."
 
 if [[ "${1:-}" == "--purge" ]]; then
   rm -f "/etc/${APP_NAME}.env"

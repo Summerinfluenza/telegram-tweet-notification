@@ -1,0 +1,10 @@
+[Unit]
+Description=Update telegram-tweet-notification from GitHub
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+# Installed copy (see install.sh), so a push can't change what runs as root.
+ExecStart=/usr/local/sbin/telegram-tweet-notification-update
+TimeoutStartSec=600

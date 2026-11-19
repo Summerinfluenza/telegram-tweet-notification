@@ -31,6 +31,12 @@ if ! python3 -m venv --help >/dev/null 2>&1 || ! python3 -c 'import ensurepip' 2
   apt-get install -y -q python3-venv
 fi
 
+say "Tools"
+for tool in git curl; do
+  command -v "$tool" >/dev/null || { apt-get update -q && apt-get install -y -q "$tool"; }
+done
+echo "    git and curl present"
+
 say "Service user '${APP_USER}'"
 if ! id "$APP_USER" >/dev/null 2>&1; then
   useradd --system --no-create-home --shell /usr/sbin/nologin "$APP_USER"
@@ -67,6 +73,15 @@ chmod +x "${APP_DIR}/deploy/"*.sh
 systemctl daemon-reload
 systemctl enable --now "${APP_NAME}.timer" >/dev/null
 echo "    enabled, next run: $(systemctl show -p NextElapseUSecRealtime --value ${APP_NAME}.timer)"
+
+say "Auto-update from GitHub"
+# Installed copy: pushes to GitHub can't change what runs as root.
+install -m 755 -o root -g root "${APP_DIR}/deploy/auto-update.sh" "/usr/local/sbin/${APP_NAME}-update"
+cp "${APP_DIR}/deploy/${APP_NAME}-update.service" /etc/systemd/system/
+cp "${APP_DIR}/deploy/${APP_NAME}-update.timer" /etc/systemd/system/
+systemctl daemon-reload
+systemctl enable --now "${APP_NAME}-update.timer" >/dev/null
+echo "    enabled: new commits on GitHub main are deployed within ~5 minutes"
 
 echo
 if grep -q "REPLACE_ME" "$ENV_FILE"; then

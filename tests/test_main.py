@@ -213,3 +213,13 @@ def test_check_skips_disabled_parts(make_config):
     assert run_checks(make_config(), Services(FakeX(), FakeTelegram()), out=lines.append)
     assert any("disabled (IBKR_ENABLED=false)" in line for line in lines)
     assert any("disabled (AI_PROVIDER=none)" in line for line in lines)
+
+
+def test_notify_sends_escaped_text(monkeypatch, make_config):
+    import notifier.main as main_module
+
+    telegram = FakeTelegram()
+    monkeypatch.setattr(main_module, "load_config", lambda: make_config())
+    monkeypatch.setattr(main_module, "build_services", lambda config: Services(FakeX(), telegram))
+    assert main(["--notify", "Updated <abc> & done"]) == 0
+    assert telegram.sent == ["Updated &lt;abc&gt; &amp; done"]
