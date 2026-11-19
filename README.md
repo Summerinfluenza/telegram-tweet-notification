@@ -2,11 +2,11 @@
 
 Get a Telegram message when chosen X (Twitter)
 accounts post. Runs on your own Linux server
-(systemd), checking every minute.
+(systemd), checking every 5 minutes.
 
 ## How it works
 
-1. A systemd timer starts the script every minute.
+1. A systemd timer starts the script every 5 min.
 2. It asks X for posts newer than the last one seen.
 3. Each new post is sent to your Telegram chat.
 4. "Last seen" ids are saved in
@@ -66,7 +66,7 @@ Optional: `INCLUDE_REPLIES`, `INCLUDE_REPOSTS`
 (`true`/`false`, default `false`).
 
 The file is read on every run, so changes take
-effect within a minute. No restart needed.
+effect on the next run. No restart needed.
 
 ## Telegram setup
 
@@ -110,7 +110,7 @@ sudo ./deploy/install.sh
 
 Edit `OnCalendar=` in
 `deploy/telegram-tweet-notification.timer`
-(e.g. `*:0/5` = every 5 min), then run
+(e.g. `minutely` = every minute), then run
 `install.sh` again.
 
 ## Costs

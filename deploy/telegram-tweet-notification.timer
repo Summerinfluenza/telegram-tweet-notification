@@ -1,10 +1,10 @@
 [Unit]
-Description=Run the tweet notifier every minute
+Description=Run the tweet notifier every 5 minutes
 
 [Timer]
 # X bills per post returned, not per check, so checking often is free
-# when nothing is new. Change to e.g. *:0/5 for every 5 minutes.
-OnCalendar=minutely
+# when nothing is new. Use "minutely" for every minute.
+OnCalendar=*:0/5
 AccuracySec=5s
 Persistent=true
 
