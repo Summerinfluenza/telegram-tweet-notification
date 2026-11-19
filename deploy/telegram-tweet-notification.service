@@ -1,5 +1,5 @@
 [Unit]
-Description=Check X accounts and send new posts to Telegram
+Description=Check X accounts and send new posts with analysis to Telegram
 Wants=network-online.target
 After=network-online.target
 
@@ -9,13 +9,14 @@ User=tweetbot
 Group=tweetbot
 WorkingDirectory=/opt/telegram-tweet-notification
 EnvironmentFile=/etc/telegram-tweet-notification.env
-# systemd creates /var/lib/telegram-tweet-notification owned by tweetbot
-StateDirectory=telegram-tweet-notification
 Environment=STATE_FILE=/var/lib/telegram-tweet-notification/state.json
+Environment=PYTHONUNBUFFERED=1
 ExecStart=/opt/telegram-tweet-notification/.venv/bin/python -m notifier.main
-TimeoutStartSec=120
+# AI calls can take a while when several posts arrive at once.
+TimeoutStartSec=300
 
-# Hardening: the bot only needs network access and its state folder.
+# Hardening: the bot only needs the network and its state folder.
+ReadWritePaths=/var/lib/telegram-tweet-notification
 NoNewPrivileges=true
 ProtectSystem=strict
 ProtectHome=true

@@ -1,0 +1,8 @@
+[project]
+name = "telegram-tweet-notification"
+version = "1.0.0"
+description = "Telegram alerts for new X posts, with AI summaries and QQQ/SPY bull/bear analysis"
+requires-python = ">=3.10"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

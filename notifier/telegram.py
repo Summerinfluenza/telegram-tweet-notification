@@ -2,44 +2,59 @@
 
 from __future__ import annotations
 
-import html
+from typing import Callable
 
 import requests
 
-from notifier.x_client import Tweet
+from notifier.http_retry import request_with_retry
 
-TIMEOUT_SECONDS = 20
-# Telegram's limit is 4096 characters; leave room for header and link.
-MAX_TEXT_LENGTH = 3500
+API_URL = "https://api.telegram.org/bot{token}/{method}"
 
 
 class TelegramError(Exception):
-    """Raised when Telegram refuses a message."""
-
-
-def format_tweet_message(tweet: Tweet) -> str:
-    text = tweet.text
-    if len(text) > MAX_TEXT_LENGTH:
-        text = text[:MAX_TEXT_LENGTH] + "…"
-    return (
-        f"🐦 <b>@{html.escape(tweet.username)}</b>\n\n"
-        f"{html.escape(text)}\n\n"
-        f'<a href="{tweet.url}">Open on X</a>'
-    )
+    """Telegram refused a request. The message explains what to do."""
 
 
 class TelegramNotifier:
-    def __init__(self, bot_token: str, chat_id: str, session: requests.Session | None = None):
-        self._url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+    def __init__(
+        self,
+        bot_token: str,
+        chat_id: str,
+        session: requests.Session | None = None,
+        sleep: Callable[[float], None] | None = None,
+    ):
+        self._token = bot_token
         self._chat_id = chat_id
         self._session = session or requests.Session()
+        self._retry_kwargs = {"sleep": sleep} if sleep else {}
 
-    def send(self, text: str) -> None:
-        response = self._session.post(
-            self._url,
-            json={"chat_id": self._chat_id, "text": text, "parse_mode": "HTML"},
-            timeout=TIMEOUT_SECONDS,
+    def _call(self, method: str, payload: dict | None = None) -> dict:
+        response = request_with_retry(
+            self._session, "POST", API_URL.format(token=self._token, method=method),
+            json=payload or {}, **self._retry_kwargs,
         )
+        if response.status_code == 401:
+            raise TelegramError("Telegram rejected the bot token (401). Check TELEGRAM_BOT_TOKEN.")
+        if response.status_code == 400 and "chat not found" in response.text.lower():
+            raise TelegramError(
+                "Telegram can't find the chat. Check TELEGRAM_CHAT_ID, and send your bot "
+                "a message first (bots can't start conversations)."
+            )
+        if response.status_code == 403:
+            raise TelegramError("The bot is blocked or not in the chat (403). Unblock it or add it again.")
         if response.status_code >= 400:
-            # Don't include the URL: it contains the bot token.
+            # Never include the URL: it contains the bot token.
             raise TelegramError(f"Telegram error {response.status_code}: {response.text[:300]}")
+        return response.json()
+
+    def send(self, html_text: str) -> None:
+        self._call("sendMessage", {
+            "chat_id": self._chat_id,
+            "text": html_text,
+            "parse_mode": "HTML",
+            "link_preview_options": {"is_disabled": True},
+        })
+
+    def bot_username(self) -> str:
+        """Used by the setup check to confirm the token works."""
+        return self._call("getMe")["result"]["username"]
