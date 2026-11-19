@@ -1,0 +1,12 @@
+[Unit]
+Description=Run the tweet notifier every minute
+
+[Timer]
+# X bills per post returned, not per check, so checking often is free
+# when nothing is new. Change to e.g. *:0/5 for every 5 minutes.
+OnCalendar=minutely
+AccuracySec=5s
+Persistent=true
+
+[Install]
+WantedBy=timers.target

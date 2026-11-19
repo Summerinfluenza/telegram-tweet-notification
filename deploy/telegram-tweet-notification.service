@@ -1,0 +1,26 @@
+[Unit]
+Description=Check X accounts and send new posts to Telegram
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=tweetbot
+Group=tweetbot
+WorkingDirectory=/opt/telegram-tweet-notification
+EnvironmentFile=/etc/telegram-tweet-notification.env
+# systemd creates /var/lib/telegram-tweet-notification owned by tweetbot
+StateDirectory=telegram-tweet-notification
+Environment=STATE_FILE=/var/lib/telegram-tweet-notification/state.json
+ExecStart=/opt/telegram-tweet-notification/.venv/bin/python -m notifier.main
+TimeoutStartSec=120
+
+# Hardening: the bot only needs network access and its state folder.
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
